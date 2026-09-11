@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Millet Meal Rotator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #16241b;
+    --bg-panel: #1c2f22;
+    --bg-panel-raised: #223829;
+    --line: #34503e;
+    --line-soft: #2a4433;
+    --parchment: #ede4d1;
+    --parchment-dim: #b9b6a4;
+    --sage: #8fac82;
+    --turmeric: #c98f3f;
+    --terracotta: #a8623c;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--parchment);
+    font-family: var(--font-body);
+    padding: 40px 32px 64px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  .masthead {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+    margin-bottom: 26px;
+  }
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 32px;
+    margin: 0 0 6px;
+  }
+  .masthead p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--parchment-dim);
+    max-width: 60ch;
+    line-height: 1.5;
+  }
+
+  .controls {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--parchment-dim);
+  }
+  .controls label { display: flex; align-items: center; gap: 8px; }
+  .controls input[type="date"] {
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--line-soft);
+    color: var(--parchment);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 5px 8px;
+    border-radius: 2px;
+  }
+  .meal-toggle { display: flex; gap: 6px; }
+  .meal-toggle button {
+    background: transparent;
+    border: 1px solid var(--line-soft);
+    color: var(--parchment-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .meal-toggle button.active { background: var(--sage); color: var(--bg); border-color: var(--sage); }
+
+  /* today card */
+  .today-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 22px 24px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .today-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .today-top .label { font-family: var(--font-mono); font-size: 11px; color: var(--parchment-dim); }
+  .today-top .millet-name { font-family: var(--font-display); font-size: 26px; color: var(--turmeric); }
+  .window-tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    border: 1px solid var(--line-soft);
+    border-radius: 2px;
+    padding: 2px 7px;
+    color: var(--sage);
+  }
+
+  .soak-note {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--bg-panel-raised);
+    border-radius: 2px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    color: var(--parchment-dim);
+  }
+  .soak-note .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--terracotta); flex-shrink: 0; }
+
+  .meal-rows { display: grid; gap: 10px; }
+  .meal-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px dashed var(--line-soft);
+  }
+  .meal-row:first-child { border-top: none; }
+  .meal-slot { font-family: var(--font-mono); font-size: 10.5px; color: var(--sage); padding-top: 2px; }
+  .meal-dish { font-size: 14.5px; }
+
+  /* rotation strip */
+  h2.section-h {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 18px;
+    margin: 0 0 12px;
+  }
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 30px;
+  }
+  .strip-day {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .strip-day.is-today { border-color: var(--turmeric); }
+  .strip-day .dow { font-family: var(--font-mono); font-size: 10px; color: var(--parchment-dim); margin-bottom: 6px; }
+  .strip-day .millet { font-size: 12px; line-height: 1.3; }
+
+  /* millet library */
+  .lib-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  @media (max-width: 720px){ .lib-grid { grid-template-columns: 1fr; } .strip { grid-template-columns: repeat(4,1fr); } }
+  .lib-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 14px 16px;
+  }
+  .lib-card h3 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+  .lib-card ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--parchment-dim); line-height: 1.6; }
+
+  footer {
+    margin-top: 20px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--parchment-dim);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>Millet meal rotator</h1>
+    <p>One millet a day, two-day rotation, soaked before it's cooked. A lightweight companion to keep the varieties from crossing while you build the habit.</p>
+  </div>
+
+  <div class="controls">
+    <label>start date <input type="date" id="startDate"></label>
+    <div class="meal-toggle" id="mealToggle">
+      <button data-n="1" class="active">1 meal/day</button>
+      <button data-n="2">2 meals/day</button>
+    </div>
+  </div>
+
+  <div class="today-card">
+    <div class="today-top">
+      <div>
+        <div class="label" id="todayDateLabel"></div>
+        <div class="millet-name" id="todayMillet"></div>
+      </div>
+      <span class="window-tag" id="windowTag"></span>
+    </div>
+    <div class="soak-note"><span class="dot"></span><span id="soakText"></span></div>
+    <div class="meal-rows" id="mealRows"></div>
+  </div>
+
+  <h2 class="section-h">This week's rotation</h2>
+  <div class="strip" id="strip"></div>
+
+  <h2 class="section-h">Millet library</h2>
+  <div class="lib-grid" id="libGrid"></div>
+
+  <footer>millet meal rotator — prototype, follows the two-day / one-variety rule</footer>
+</div>
+
+<script>
+  // ---------- Millet library (in-memory) ----------
+  const millets = [
+    {
+      name: 'Foxtail millet',
+      soakHours: 2,
+      meals: {
+        1: [{ slot: 'main', dish: 'Foxtail millet instant dosa' }],
+        2: [{ slot: 'breakfast', dish: 'Foxtail millet instant dosa' }, { slot: 'dinner', dish: 'Foxtail millet upma' }]
+      },
+      notes: ['Soak minimum 2 hrs, cook in soak water', 'Good for dosa batter — grinds smooth', 'Pairs well with coconut chutney']
+    },
+    {
+      name: 'Kodo millet',
+      soakHours: 2,
+      meals: {
+        1: [{ slot: 'main', dish: 'Kodo millet khichdi' }],
+        2: [{ slot: 'breakfast', dish: 'Kodo millet pongal' }, { slot: 'dinner', dish: 'Kodo millet khichdi' }]
+      },
+      notes: ['Soak minimum 2 hrs, cook in soak water', 'Mild flavor, absorbs spices well', 'Good starter grain for khichdi-style meals']
+    },
+    {
+      name: 'Little millet',
+      soakHours: 2,
+      meals: {
+        1: [{ slot: 'main', dish: 'Little millet upma' }],
+        2: [{ slot: 'breakfast', dish: 'Little millet upma' }, { slot: 'dinner', dish: 'Little millet curd rice-style' }]
+      },
+      notes: ['Soak minimum 2 hrs, cook in soak water', 'Closest texture to rice — easy transition grain', 'Works well cold, curd-rice style']
+    }
+  ];
+
+  const dowShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function milletForDate(date, startDate){
+    const msPerDay = 86400000;
+    const diffDays = Math.floor((stripDay(date) - stripDay(startDate)) / msPerDay);
+    if (diffDays < 0) return null;
+    const block = Math.floor(diffDays / 2) % millets.length;
+    return millets[block];
+  }
+  function stripDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function dayInBlock(date, startDate){
+    const msPerDay = 86400000;
+    const diffDays = Math.floor((stripDay(date) - stripDay(startDate)) / msPerDay);
+    return ((diffDays % 2) + 2) % 2; // 0 or 1
+  }
+
+  let mealsPerDay = 1;
+  const startInput = document.getElementById('startDate');
+  const today = new Date();
+  startInput.value = today.toISOString().slice(0,10);
+
+  document.getElementById('mealToggle').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      mealsPerDay = +b.dataset.n;
+      [...b.parentElement.children].forEach(x => x.classList.toggle('active', x === b));
+      render();
+    };
+  });
+  startInput.onchange = render;
+
+  function render(){
+    const startDate = new Date(startInput.value + 'T00:00:00');
+    const now = new Date();
+
+    // --- Today card ---
+    const m = milletForDate(now, startDate);
+    document.getElementById('todayDateLabel').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase();
+    if (!m){
+      document.getElementById('todayMillet').textContent = '— set a start date —';
+      document.getElementById('windowTag').textContent = '';
+      document.getElementById('soakText').textContent = 'Pick a start date on or before today to begin the rotation.';
+      document.getElementById('mealRows').innerHTML = '';
+    } else {
+      document.getElementById('todayMillet').textContent = m.name;
+      const dib = dayInBlock(now, startDate);
+      document.getElementById('windowTag').textContent = `day ${dib + 1} of 2`;
+      document.getElementById('soakText').textContent = `Soak ${m.name.toLowerCase()} at least ${m.soakHours} hrs ahead — cook it in the same soaking water.`;
+      const rows = document.getElementById('mealRows');
+      rows.innerHTML = '';
+      m.meals[mealsPerDay].forEach(row => {
+        const el = document.createElement('div');
+        el.className = 'meal-row';
+        el.innerHTML = `<div class="meal-slot">${row.slot}</div><div class="meal-dish">${row.dish}</div>`;
+        rows.appendChild(el);
+      });
+    }
+
+    // --- Week strip ---
+    const strip = document.getElementById('strip');
+    strip.innerHTML = '';
+    for (let i = -2; i <= 4; i++){
+      const d = new Date(now);
+      d.setDate(d.getDate() + i);
+      const dm = milletForDate(d, startDate);
+      const card = document.createElement('div');
+      card.className = 'strip-day' + (i === 0 ? ' is-today' : '');
+      card.innerHTML = `<div class="dow">${dowShort[d.getDay()]} ${d.getDate()}</div><div class="millet">${dm ? dm.name.replace(' millet','') : '—'}</div>`;
+      strip.appendChild(card);
+    }
+
+    // --- Library ---
+    const lib = document.getElementById('libGrid');
+    lib.innerHTML = '';
+    millets.forEach(mm => {
+      const card = document.createElement('div');
+      card.className = 'lib-card';
+      card.innerHTML = `<h3>${mm.name}</h3><ul>${mm.notes.map(n => `<li>${n}</li>`).join('')}</ul>`;
+      lib.appendChild(card);
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
